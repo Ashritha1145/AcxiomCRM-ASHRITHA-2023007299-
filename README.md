@@ -2,7 +2,7 @@
 
 **Candidate:** Ashritha  
 **Registration / Student ID:** 2023007299  
-**Submission Repository:** [Ashritha1145/AcxiomCRM-ASHRITHA-2023007299](https://github.com/Ashritha1145/AcxiomCRM-ASHRITHA-2023007299)  
+**Submission Repository:** [Ashritha1145/AcxiomCRM-ASHRITHA-2023007299-](https://github.com/Ashritha1145/AcxiomCRM-ASHRITHA-2023007299-)  
 **Project Assignment:** AcxiomCRM Full-Stack Enterprise CRM  
 
 ---
