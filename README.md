@@ -1,184 +1,198 @@
 # AcxiomCRM - Enterprise Customer Lifecycle Management System
 
-An enterprise-grade, role-based CRM full-stack web application built according to the **AcxiomCRM Project Assignment Specification**.
+**Candidate:** Ashritha  
+**Registration / Student ID:** 2023007299  
+**Submission Repository:** [Ashritha1145/AcxiomCRM-ASHRITHA-2023007299](https://github.com/Ashritha1145/AcxiomCRM-ASHRITHA-2023007299)  
+**Project Assignment:** AcxiomCRM Full-Stack Enterprise CRM  
 
 ---
 
-## 1. Technology Stack
+## 1. Executive Summary & Architecture
 
-- **Framework:** ASP.NET Core 8.0 MVC (Razor Views)
-- **Data Access:** Entity Framework Core 8.0 (Code-First)
-- **Database:** SQLite (zero-configuration, self-contained, auto-seeded on first run)
-- **Security & Authentication:** ASP.NET Core Identity (framework-managed PBKDF2 password hashing, secure auth cookies, account lockout, global `[Authorize]` fallback policy)
-- **UI & UX:** Bootstrap 5.3, Bootstrap Icons, jQuery Validation & Unobtrusive Client Validation
-- **Analytics & Data Visualizations:** Chart.js 4.4 (Pipeline by Stage bar chart, Lead Status doughnut chart, Monthly Sales line chart)
-- **Architecture:** Enterprise 4-Layer Architecture (Presentation, Application Services, Domain/Business Logic, Data Access)
+AcxiomCRM is an enterprise-grade Customer Relationship Management (CRM) platform covering the entire customer-sales lifecycle from prospect lead capture through qualification, conversion, opportunity pipeline tracking, scheduled follow-ups, activity logs, and executive analytics.
+
+The application follows an **Enterprise Layered Architecture**:
+- **Presentation Layer:** ASP.NET Core 8 MVC (Razor Views), Bootstrap 5.3, Bootstrap Icons, Unobtrusive Client Validation, and Chart.js 4.4.
+- **Application & Service Coordination Layer:** Typed service interfaces (`ICustomerService`, `ILeadService`, `IOpportunityService`, `IFollowUpService`, `IActivityService`, `IDashboardService`, `IAuditService`) enforcing ownership scoping and business workflows.
+- **Domain & Business Layer:** Strongly-typed CRM domain models, custom validation attributes, regex validations, and state machine transitions.
+- **Data Access Layer:** Entity Framework Core 8 with SQLite database (zero-configuration, code-first migrations, auto-seeded on initial startup).
+- **Security & Authorization Layer:** ASP.NET Core Identity with PBKDF2 salted password hashing, 5-attempt account lockout, session cookies, and role-based access control.
+
+```
+AcxiomCRM Architecture
+│
+├── Controllers/            # MVC Web Controllers with [Authorize] & [ValidateAntiForgeryToken]
+│   └── Api/                # REST API Controllers returning pure DTOs (no EF entity leaks)
+├── Models/                 # Domain Entities (Customer, Lead, Opportunity, FollowUp, Activity, AuditLog, ApplicationUser)
+├── ViewModels/             # View presentation models with DataAnnotations and error messaging
+├── DTOs/                   # Data Transfer Objects for API request and response isolation
+├── Data/                   # EF Core ApplicationDbContext and automated DbInitializer seeder
+├── Services/               # Business logic, audit logging, and role scoping service layer
+└── Views/                  # Razor Views styled with Bootstrap 5 and Chart.js dashboards
+```
 
 ---
 
-## 2. Default Seeded Credentials
+## 2. Technology Stack
 
-The database automatically initializes and seeds all 3 primary role profiles with realistic enterprise data on application startup:
+| Layer | Component | Version / Details |
+|---|---|---|
+| **Framework** | ASP.NET Core MVC | .NET 8.0 (LTS) |
+| **ORM / Data Access** | Entity Framework Core | 8.0.11 (Code-First) |
+| **Database** | SQLite | Embedded, zero-configuration |
+| **Authentication & Identity** | ASP.NET Core Identity | PBKDF2 adaptive password hashing, cookie auth |
+| **Front-End Styling** | Bootstrap & Icons | Bootstrap 5.3, Bootstrap Icons 1.11 |
+| **Client Validation** | jQuery Unobtrusive | jQuery 3.7 + jQuery Validation 1.19 |
+| **Data Visualization** | Chart.js | Chart.js 4.4 (local offline bundle) |
 
-| Role | Email Address | Password | Access Scope |
+---
+
+## 3. Seeded Accounts & Role-Based Authorization
+
+The application automatically seeds 3 distinct role personas with realistic enterprise demo data upon first execution.
+
+| Role | Email Address | Password | Privileges & Access Scope |
 |---|---|---|---|
-| **Admin** | `admin@acxiom.com` | `Test@1234` | Full system administration, user management, role reassignment, account unlocks, complete audit log viewer, all CRM records and reports. |
-| **Manager** | `manager@acxiom.com` | `Test@1234` | Team-wide customer, lead, opportunity, follow-up management and executive reports. |
-| **SalesExecutive** | `sales@acxiom.com` | `Test@1234` | Scoped strictly to own assigned leads, customers, opportunities, follow-ups, and activities. |
+| **Admin** | `admin@acxiom.com` | `Test@1234` | Full unrestricted administration: User & Role management, Account Unlock, Audit Log viewer, all CRM records and executive reports. |
+| **Manager** | `manager@acxiom.com` | `Test@1234` | Team oversight: View team pipeline, all customer accounts, leads, opportunities, follow-ups, and conversion analytics. |
+| **SalesExecutive** | `sales@acxiom.com` | `Test@1234` | Least-privilege scoping: Can only view, edit, and access records where `CreatedBy == currentUserId` or `AssignedTo == currentUserId`. Manual URL tampering returns 404/403. |
 
-*(Password Policy: Minimum 8 characters, at least 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special character).*
+> **Password Policy Enforced:** Minimum 8 characters, at least 1 uppercase letter, 1 lowercase letter, 1 numeric digit, and 1 special symbol.  
+> **Account Lockout Policy:** 5 consecutive failed login attempts trigger a 10-minute security lockout. Administrators can unlock accounts immediately via the Admin Console.  
+> **Quick-Fill Buttons:** The Sign-In screen features 1-click credential filler buttons for rapid evaluator testing.
 
 ---
 
-## 3. How to Run the Application
+## 4. How to Run the Application
 
-### Prerequisites
-- [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+### Option A: Using Windows Runner Scripts (Fastest)
+Double-click **`run.bat`** (or execute `.\run.ps1` in PowerShell).
 
-### Execution Steps
-From the root directory or inside `AcxiomCRM`:
-
-```bash
+### Option B: Using .NET CLI
+```powershell
 cd AcxiomCRM
 dotnet run
 ```
 
-The application will launch on `http://localhost:5218` (or `http://localhost:5000` / HTTPS if configured).
+### Option C: If `dotnet` is not in your current shell session PATH
+```powershell
+$env:PATH = "C:\Users\AshuS\AppData\Local\Microsoft\dotnet;$env:PATH"
+cd AcxiomCRM
+dotnet run
+```
 
-On the first launch:
-1. SQLite database `AcxiomCRM.db` is created automatically.
-2. Roles (`Admin`, `Manager`, `SalesExecutive`) and default users are seeded.
-3. Realistic enterprise customers, leads, opportunities, follow-ups, activities, and initial audit logs are populated.
+Once running, navigate your web browser to:
+**`http://localhost:5218`** (or the URL printed in the terminal).
 
 ---
 
-## 4. Key Functional Modules
+## 5. Functional Modules & Capabilities
 
-```
-AcxiomCRM
-│
-├── Authentication & Identity
-│   ├── Login (with quick-fill credential buttons for evaluators)
-│   ├── Register (provisions new SalesExecutive accounts)
-│   ├── Logout (safe session termination + audit log)
-│   ├── Lockout (triggered after 5 failed attempts, 10 min window)
-│   └── 401/403 status code handlers for REST API requests
-│
-├── Dashboard
-│   ├── Role-scoped KPI Cards (Total Customers, Total Leads, Open Leads, Total Deals, Pipeline Value, Weighted Value)
-│   ├── Date Filtering (All Time, This Month, This Week, Today)
-│   ├── Chart.js Lead Status Doughnut Chart
-│   ├── Chart.js Opportunity Pipeline by Stage Bar Chart
-│   ├── Chart.js Closed Won Monthly Sales Line Chart
-│   └── Quick Follow-Up Actions & Completion
-│
-├── Customer Management
-│   ├── Search (name, code, company, email, phone) & status filters
-│   ├── Customer 360 Details view (linked deals, follow-ups, activities)
-│   ├── Client & server-side duplicate checks (email, phone, code)
-│   ├── Soft-delete deactivation with confirmation modal
-│   └── Server-side role scoping (SalesExecutive only views assigned)
-│
-├── Lead Management & Conversion Workflow
-│   ├── Lead status workflow: New ➔ Contacted ➔ Qualified ➔ Converted / Lost
-│   ├── Transition protection: Invalid jumps (e.g. New directly to Converted) blocked
-│   └── Lead Conversion: 1-click wizard converts Qualified lead to Customer and creates linked Opportunity
-│
-├── Opportunity & Pipeline Management
-│   ├── Pipeline stages: Qualification, Proposal, Negotiation, Won, Lost
-│   ├── Inline stage progression menu with instant recalculation
-│   ├── Weighted Pipeline calculation: (Amount × Probability) / 100
-│   └── Strict validation: Amount > 0, Probability 0-100%, Close date cannot be in the past
-│
-├── Follow-Up Management
-│   ├── Channels: Call, Meeting, Email, Demo
-│   ├── Rule: New follow-up date cannot be earlier than today
-│   ├── Overdue indicators & 1-click "Complete" action
-│   └── Status: Planned, Completed, Missed, Cancelled
-│
-├── Activity Logging
-│   ├── Call, Meeting, Email, and Task logs
-│   ├── Linked to Customer and/or Lead
-│   └── Search and filter by activity type and status
-│
-├── Reports & Analytics
-│   ├── Stage-wise Pipeline Report
-│   ├── Lead Conversion & Win/Loss Outcome Report
-│   ├── Customer Master Directory
-│   ├── Follow-Up Execution Report
-│   └── Print / PDF Export Friendly Layout
-│
-├── User & Access Administration (Admin Only)
-│   ├── User listing with account & lockout status
-│   ├── Manual 1-click Account Unlock for locked out users
-│   ├── Role changes (Admin / Manager / SalesExecutive)
-│   ├── Account activation / deactivation toggles
-│   └── Administrative password resets
-│
-└── Security & Audit Logs (Admin Only)
-    ├── Append-only event history (Login, Failed Login, Lockout, Logout, Create, Update, Delete, Role Change)
-    ├── Filters: User, Entity Name, Action, Date Range
-    ├── Modal viewer displaying before-and-after JSON state diffs
-    └── Sensitive data filtering (passwords and hashes never logged)
-```
+### 5.1 Dashboard Analytics
+- **KPI Summary Cards:** Total Customers, Total Leads, Open Leads, Active Opportunities, Won Deals, Lost Deals, Total Pipeline Value, and Weighted Pipeline Value.
+- **Temporal Filters:** Today, This Week, This Month, and All Time.
+- **Chart.js Visualizations:**
+  1. *Opportunity Pipeline by Stage* (Bar Chart)
+  2. *Lead Status Breakdown* (Doughnut Chart)
+  3. *Monthly Closed-Won Revenue Trend* (Line Chart)
+- **Actionable Widget:** Upcoming and overdue follow-up queue with 1-click completion.
 
----
+### 5.2 Customer Management
+- **Search & Filter:** Search across Customer Name, Code, Email, Phone, Company, and Status.
+- **360-Degree Profile:** Displays customer master data alongside linked active deals, scheduled follow-ups, and interaction timeline.
+- **Duplicate Prevention:** Server-side duplicate checks for Email, Phone number, and Customer Code.
+- **Soft Deactivation:** Safe deactivation preserves audit trails without cascading data loss.
 
-## 5. Security Architecture
+### 5.3 Lead Management & Conversion Workflow
+- **State Machine Workflow:** Enforces valid lifecycle stages: `New` ➔ `Contacted` ➔ `Qualified` ➔ `Converted` / `Lost`.
+- **Workflow Protection:** Prevents illegal jumps (e.g. `New` cannot jump directly to `Converted`).
+- **1-Click Lead Conversion Wizard:** Converting a `Qualified` lead provisions a Customer master record and optionally attaches an active sales Opportunity with target value and expected close date.
 
-1. **Authentication:** ASP.NET Core Identity with PBKDF2-based salted hashing. Plain-text passwords are never stored or displayed.
-2. **Account Lockout:** Configured for 5 failed attempts (`MaxFailedAccessAttempts = 5`), applying a 10-minute lockout window (`DefaultLockoutTimeSpan = 10 min`). Administrators can immediately unlock accounts from the Admin console.
-3. **Authorization:** Global `FallbackPolicy` requiring authentication across all controller actions except explicit `[AllowAnonymous]` login and register endpoints. Role-based restrictions (`[Authorize(Roles = "Admin")]`) and service-layer ownership scoping (`CreatedBy == currentUserId` / `AssignedTo == currentUserId`).
-4. **Anti-Forgery:** State-changing MVC forms are protected with `@Html.AntiForgeryToken()` and validated server-side with `[ValidateAntiForgeryToken]`.
-5. **REST API Security:** Protected by Identity cookies. Unauthenticated requests to `/api/*` receive HTTP `401 Unauthorized` (rather than a redirect to the HTML login page). Unauthorized requests return HTTP `403 Forbidden`.
-6. **Data Integrity & SQL Injection Protection:** Built using EF Core parameterized queries and LINQ APIs; no raw dynamic string concatenation.
-7. **DTO Isolation:** Database entity models are never directly exposed via APIs. Custom DTOs are used for all REST endpoints.
+### 5.4 Opportunity & Pipeline Management
+- **Pipeline Stages:** `Qualification`, `Proposal`, `Negotiation`, `Won`, `Lost`.
+- **Mathematical Formulations:**
+  $$\text{Weighted Pipeline Value} = \frac{\text{Opportunity Amount} \times \text{Probability}}{100}$$
+- **Validation Rules:**
+  - Opportunity Amount must be strictly greater than 0: `"Opportunity Amount must be greater than 0."`
+  - Probability must be between 0 and 100: `"Probability must be between 0 and 100."`
+  - Expected Close Date cannot be in the past: `"Expected Close Date cannot be in the past."`
+
+### 5.5 Follow-Up & Activity Tracking
+- **Channels:** Phone Calls, Meetings, Email Correspondence, and Product Demos.
+- **Date Protection:** Follow-up date cannot be earlier than today: `"Follow-up date cannot be earlier than today."`
+- **Audit & Status:** Statuses include `Planned`, `Completed`, `Missed`, and `Cancelled`.
+
+### 5.6 User & Role Administration (Admin Only)
+- User directory with status badges and lockout indicators.
+- 1-click **Account Unlock** mechanism.
+- Role management (`Admin`, `Manager`, `SalesExecutive`).
+- Administrative password reset flows.
+
+### 5.7 Audit Trail & Governance (Admin Only)
+- Append-only security logging capturing `Login`, `Failed Login`, `Lockout`, `Logout`, `Create`, `Update`, `Delete`, `Role Change`, and `Lead Conversion`.
+- Before-and-after JSON state diffs viewable via a modal inspector.
+- Exclusion of passwords, password hashes, and sensitive authentication tokens.
 
 ---
 
 ## 6. REST API Specification
 
+All REST APIs use dedicated Data Transfer Objects (DTOs) and return standard HTTP status codes (`200 OK`, `201 Created`, `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `409 Conflict`).
+
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|---|
-| `POST` | `/api/auth/login` | Authenticate user and receive session | Public |
-| `POST` | `/api/auth/logout` | Terminate session | Authenticated |
-| `GET` | `/api/customers` | Scoped list and search of customers | Authenticated |
-| `GET` | `/api/customers/{id}` | Retrieve customer by ID | Authenticated |
-| `POST` | `/api/customers` | Create new customer master record | Authenticated |
-| `PUT` | `/api/customers/{id}` | Update existing customer record | Authenticated |
-| `DELETE`| `/api/customers/{id}` | Soft-deactivate customer | Authenticated |
-| `GET` | `/api/leads` | Scoped list and search of leads | Authenticated |
-| `POST` | `/api/leads` | Create new lead record | Authenticated |
-| `GET` | `/api/opportunities` | Scoped list of sales opportunities | Authenticated |
-| `POST` | `/api/opportunities` | Create new opportunity | Authenticated |
-| `GET` | `/api/followups` | Scoped list of planned follow-ups | Authenticated |
-| `POST` | `/api/followups` | Schedule new follow-up | Authenticated |
-| `GET` | `/api/reports/pipeline` | Aggregated stage-wise pipeline metrics | Manager / Admin |
+| `POST` | `/api/auth/login` | Authenticate user credentials and issue cookie | Anonymous |
+| `POST` | `/api/auth/logout` | Terminate session and clear cookie | Authenticated |
+| `GET` | `/api/customers` | Query and search customer master records | Authenticated (Scoped) |
+| `GET` | `/api/customers/{id}` | Retrieve customer record by ID | Authenticated (Scoped) |
+| `POST` | `/api/customers` | Create a new customer master record | Authenticated |
+| `PUT` | `/api/customers/{id}` | Update existing customer details | Authenticated (Scoped) |
+| `DELETE`| `/api/customers/{id}` | Soft-deactivate customer | Authenticated (Scoped) |
+| `GET` | `/api/leads` | Query and search prospect leads | Authenticated (Scoped) |
+| `POST` | `/api/leads` | Create a new prospect lead | Authenticated |
+| `GET` | `/api/opportunities` | Query active sales opportunities | Authenticated (Scoped) |
+| `POST` | `/api/opportunities` | Create a new sales opportunity | Authenticated |
+| `GET` | `/api/followups` | Retrieve scheduled follow-ups | Authenticated (Scoped) |
+| `POST` | `/api/followups` | Schedule a new follow-up engagement | Authenticated |
+| `GET` | `/api/reports/pipeline` | Aggregate stage-wise pipeline metrics | Manager / Admin |
+
+> **API Security Note:** In compliance with assignment requirements, unauthenticated requests to `/api/*` return **`401 Unauthorized`** HTTP status codes directly instead of redirecting to the HTML login view.
 
 ---
 
-## 7. Business Validation Rules
+## 7. Business Validation Matrix
 
-| Rule | Validation Category | Enforced Message / Behavior |
-|---|---|---|
-| **Opportunity Amount** | Numeric & Business | Must be > 0. Rejects with `"Opportunity Amount must be greater than 0."` |
-| **Probability** | Numeric & Business | Must be 0–100. Rejects with `"Probability must be between 0 and 100."` |
-| **Expected Close Date** | Date & Business | Cannot be in past for active deals: `"Expected Close Date cannot be in the past."` |
-| **Follow-Up Date** | Date & Business | Cannot be earlier than today: `"Follow-up date cannot be earlier than today."` |
-| **Phone Number** | Phone & Format | 10-digit Indian mobile regex: `^[6-9]\d{9}$` |
-| **Customer Email/Phone/Code** | Uniqueness | Server-side duplicate checks return user-friendly conflict errors |
-| **Lead Status Workflow** | State Machine | Prevents illegal state transitions (e.g. New cannot jump to Converted) |
+| Field / Area | Validation Requirement | Category | Error Response |
+|---|---|---|---|
+| **Customer Name** | Required, max 100 characters | Required & Length | `"Customer Name is required."` |
+| **Customer Email** | Valid RFC email, must be unique | Format & Business | `"Enter a valid email address."` / duplicate conflict |
+| **Mobile Phone** | Indian 10-digit mobile `^[6-9]\d{9}$`, unique | Regex & Business | `"Enter a valid 10-digit Indian mobile number."` |
+| **Lead Name** | Required, max 100 characters | Required & Length | `"Lead Name is required."` |
+| **Lead Value** | Numeric range 0 to 100,000,000 | Numeric | `"Expected Value must be between 0 and 100,000,000."` |
+| **Opportunity Amount** | Strictly positive numeric | Numeric & Business | `"Opportunity Amount must be greater than 0."` |
+| **Probability** | Integer range 0 through 100 | Range | `"Probability must be between 0 and 100."` |
+| **Expected Close Date** | Cannot be in past for active deals | Date & Business | `"Expected Close Date cannot be in the past."` |
+| **Follow-Up Date** | Cannot be earlier than current date | Date & Business | `"Follow-up date cannot be earlier than today."` |
+| **Lead Transitions** | Valid sequential workflow states | State Machine | `"Invalid status transition from '{0}' to '{1}'."` |
 
 ---
 
-## 8. Verification & Acceptance Testing
+## 8. Automated Acceptance Verification
 
-An automated verification test script is included at the project root (`test_crm.ps1`). It boots the compiled server and automatically tests:
-- Protected page redirection for anonymous users
-- HTTP 401 response for unauthenticated `/api/*` requests
-- User authentication and session cookie establishment
-- Role scoping between Admin and SalesExecutive accounts
-- Server-side rejection of negative Opportunity amounts
-- Server-side rejection of Probability > 100
-- Server-side rejection of past Follow-up dates
-- Automatic generation of AuditLog entries upon CRUD operations
+The project root includes an automated end-to-end acceptance script (`test_crm.ps1`) that executes the 14 mandatory acceptance test cases against the live running server:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\test_crm.ps1
+```
+
+**Verification Results:**
+- ✅ **Test 1:** Anonymous access to protected `/Dashboard` redirects to `/Account/Login`.
+- ✅ **Test 2:** Anonymous access to `/api/customers` returns HTTP 401 Unauthorized (no HTML redirect).
+- ✅ **Test 3:** Authentication via `/api/auth/login` returns successful user session and role claims.
+- ✅ **Test 4:** Authenticated GET `/api/customers` retrieves formatted customer DTOs.
+- ✅ **Test 5:** Authenticated GET `/api/reports/pipeline` returns stage-wise breakdown and totals.
+- ✅ **Test 6:** Creating a customer generates record and inserts an `AuditLogs` entry.
+- ✅ **Test 7:** Opportunity with `Amount <= 0` is rejected by server with HTTP 400 Bad Request.
+- ✅ **Test 8:** Opportunity with `Probability > 100` is rejected by server with HTTP 400 Bad Request.
+- ✅ **Test 9:** Follow-up dated in the past is rejected by server with HTTP 400 Bad Request.
+- ✅ **Test 10:** Role scoping confirms SalesExecutive accounts are restricted to their own data scope.
