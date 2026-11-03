@@ -1,0 +1,121 @@
+@model AcxiomCRM.ViewModels.ConvertLeadViewModel
+@{
+    ViewData["Title"] = "Convert Qualified Lead";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card card-custom border-success">
+            <div class="card-header bg-success text-white py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="fw-bold mb-0"><i class="bi bi-arrow-repeat me-2"></i>Convert Lead into Customer</h4>
+                    <a asp-action="Details" asp-route-id="@Model.LeadId" class="btn btn-sm btn-outline-light">&larr; Back to Lead</a>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-secondary mb-4">
+                    Converting qualified lead <strong>@Model.LeadName</strong> will provision a permanent Customer master record and optionally link an active sales Opportunity to your pipeline.
+                </p>
+
+                <form asp-action="Convert" method="post" id="convertForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="LeadId" />
+                    <input type="hidden" asp-for="Email" />
+                    <input type="hidden" asp-for="Phone" />
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small" role="alert"></div>
+
+                    <h5 class="fw-bold text-primary mb-3"><i class="bi bi-person-badge me-2"></i>New Customer Information</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label asp-for="CustomerCode" class="form-label fw-semibold small">Customer Code <span class="text-danger">*</span></label>
+                            <input asp-for="CustomerCode" class="form-control" />
+                            <span asp-validation-for="CustomerCode" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-8">
+                            <label asp-for="CustomerName" class="form-label fw-semibold small">Customer Name <span class="text-danger">*</span></label>
+                            <input asp-for="CustomerName" class="form-control" />
+                            <span asp-validation-for="CustomerName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Email Address</label>
+                            <input class="form-control bg-light" value="@Model.Email" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Phone Number</label>
+                            <input class="form-control bg-light" value="@Model.Phone" readonly />
+                        </div>
+
+                        <div class="col-md-12">
+                            <label asp-for="Address" class="form-label fw-semibold small">Address</label>
+                            <input asp-for="Address" class="form-control" placeholder="Street Address" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="City" class="form-label fw-semibold small">City</label>
+                            <input asp-for="City" class="form-control" placeholder="City" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="State" class="form-label fw-semibold small">State</label>
+                            <input asp-for="State" class="form-control" placeholder="State" />
+                        </div>
+                    </div>
+
+                    <div class="border-top pt-4">
+                        <div class="form-check form-switch mb-3">
+                            <input asp-for="CreateOpportunity" class="form-check-input" type="checkbox" id="chkCreateOpp" onchange="toggleOppFields(this.checked)" />
+                            <label class="form-check-label fw-bold" for="chkCreateOpp">
+                                Create an Opportunity in Sales Pipeline for this Customer
+                            </label>
+                        </div>
+
+                        <div id="oppFieldsContainer">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="OpportunityName" class="form-label fw-semibold small">Opportunity Name <span class="text-danger">*</span></label>
+                                    <input asp-for="OpportunityName" class="form-control" placeholder="Deal Name" />
+                                    <span asp-validation-for="OpportunityName" class="text-danger small"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="OpportunityAmount" class="form-label fw-semibold small">Deal Value (INR) <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">&#8377;</span>
+                                        <input asp-for="OpportunityAmount" class="form-control" type="number" step="1000" min="1" />
+                                    </div>
+                                    <span asp-validation-for="OpportunityAmount" class="text-danger small"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="ExpectedCloseDate" class="form-label fw-semibold small">Target Close Date</label>
+                                    <input asp-for="ExpectedCloseDate" class="form-control" type="date" />
+                                    <span asp-validation-for="ExpectedCloseDate" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                        <a asp-action="Index" class="btn btn-light">Cancel</a>
+                        <button type="submit" class="btn btn-success px-4">
+                            <i class="bi bi-check-circle me-1"></i> Confirm Conversion
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function toggleOppFields(show) {
+            document.getElementById('oppFieldsContainer').style.display = show ? 'block' : 'none';
+        }
+    </script>
+}

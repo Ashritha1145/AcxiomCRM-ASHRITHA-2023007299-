@@ -1,0 +1,23 @@
+@{
+    ViewData["Title"] = "Account Locked";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 text-center">
+        <div class="card card-custom p-5 border-danger">
+            <div class="mb-3">
+                <i class="bi bi-shield-slash-fill text-danger display-4"></i>
+            </div>
+            <h3 class="fw-bold text-danger">Account Locked Out</h3>
+            <p class="text-secondary mt-2">
+                This account has been temporarily locked due to <strong>5 consecutive failed login attempts</strong>.
+            </p>
+            <p class="small text-muted">
+                As per enterprise security policy, your account is locked for 10 minutes. An administrator can also unlock your account manually from the User Administration console.
+            </p>
+            <div class="mt-4">
+                <a asp-action="Login" class="btn btn-outline-primary"><i class="bi bi-arrow-left me-1"></i> Return to Sign In</a>
+            </div>
+        </div>
+    </div>
+</div>

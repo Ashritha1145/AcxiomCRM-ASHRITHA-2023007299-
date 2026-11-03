@@ -1,0 +1,188 @@
+@model AcxiomCRM.ViewModels.AuditLogFilterViewModel
+@{
+    ViewData["Title"] = "Security & Business Audit Logs";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-shield-check text-danger me-2"></i>Security & Activity Audit Logs</h3>
+        <p class="text-muted small mb-0">Append-only audit trail recording authentication, entity CRUD mutations, and role transitions</p>
+    </div>
+    <span class="badge bg-danger fs-6 px-3 py-2"><i class="bi bi-lock-fill me-1"></i> Admin Privileged</span>
+</div>
+
+<!-- Filters Card -->
+<div class="card card-custom mb-3">
+    <div class="card-body p-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <select name="userId" class="form-select">
+                    <option value="">All Users</option>
+                    @foreach (var u in Model.UsersList)
+                    {
+                        <option value="@u.Value" selected="@(Model.UserId == u.Value)">@u.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="text" name="action" value="@Model.Action" class="form-control" placeholder="Action (e.g. Login, Create...)" />
+            </div>
+            <div class="col-md-2">
+                <input type="text" name="entityName" value="@Model.EntityName" class="form-control" placeholder="Entity (e.g. Customer, Lead...)" />
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" class="form-control" title="From Date" />
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" class="form-control" title="To Date" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary"><i class="bi bi-funnel me-1"></i> Filter</button>
+                <a asp-action="Index" class="btn btn-link text-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="card card-custom">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 font-monospace small">
+            <thead class="table-light text-uppercase">
+                <tr>
+                    <th>Timestamp (UTC)</th>
+                    <th>User ID</th>
+                    <th>Action</th>
+                    <th>Entity</th>
+                    <th>Record ID</th>
+                    <th>Result</th>
+                    <th>IP Address</th>
+                    <th class="text-end">Payload</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Logs.Any())
+                {
+                    foreach (var log in Model.Logs)
+                    {
+                        <tr>
+                            <td class="text-nowrap fw-semibold">@log.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            <td class="small text-truncate" style="max-width: 120px;" title="@log.UserId">
+                                @(log.UserId ?? "Anonymous")
+                            </td>
+                            <td>
+                                @if (log.Action.Contains("Login"))
+                                {
+                                    <span class="badge @(log.Result == "Success" ? "bg-success" : "bg-danger")">@log.Action</span>
+                                }
+                                else if (log.Action == "Create")
+                                {
+                                    <span class="badge bg-primary">Create</span>
+                                }
+                                else if (log.Action == "Update")
+                                {
+                                    <span class="badge bg-warning text-dark">Update</span>
+                                }
+                                else if (log.Action == "Delete")
+                                {
+                                    <span class="badge bg-danger">Delete</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-dark">@log.Action</span>
+                                }
+                            </td>
+                            <td><span class="badge bg-light text-dark border">@log.EntityName</span></td>
+                            <td>@(log.RecordId ?? "-")</td>
+                            <td>
+                                @if (log.Result == "Success")
+                                {
+                                    <span class="text-success fw-bold"><i class="bi bi-check-circle me-1"></i>Success</span>
+                                }
+                                else
+                                {
+                                    <span class="text-danger fw-bold"><i class="bi bi-x-circle me-1"></i>@log.Result</span>
+                                }
+                            </td>
+                            <td class="text-muted">@(log.IpAddress ?? "127.0.0.1")</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-0"
+                                        onclick="viewPayload('@Html.Raw(JavaScriptEncoder.Default.Encode(log.OldValue ?? "None"))', '@Html.Raw(JavaScriptEncoder.Default.Encode(log.NewValue ?? "None"))')">
+                                    <i class="bi bi-code-slash"></i> View
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            <i class="bi bi-journal-x fs-3 d-block mb-1"></i> No audit logs matching filter.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (Model.TotalPages > 1)
+    {
+        <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+            <span class="small text-muted">Showing page @Model.CurrentPage of @Model.TotalPages (Total entries: @Model.TotalCount)</span>
+            <ul class="pagination pagination-sm mb-0">
+                @for (int p = 1; p <= Model.TotalPages; p++)
+                {
+                    <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@p" asp-route-userId="@Model.UserId" asp-route-action="@Model.Action" asp-route-entityName="@Model.EntityName" asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))" asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))">@p</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>
+
+<!-- Payload Details Modal -->
+<div class="modal fade" id="payloadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-braces me-2"></i>Audit Change Payload</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Previous State (OldValue):</h6>
+                <pre id="oldValuePre" class="p-3 bg-light border rounded small mb-3"></pre>
+
+                <h6>New State (NewValue):</h6>
+                <pre id="newValuePre" class="p-3 bg-light border rounded small mb-0"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@using System.Text.Encodings.Web
+@section Scripts {
+    <script>
+        function viewPayload(oldVal, newVal) {
+            try {
+                document.getElementById('oldValuePre').textContent = (oldVal && oldVal !== 'None') ? JSON.stringify(JSON.parse(oldVal), null, 2) : 'None';
+            } catch {
+                document.getElementById('oldValuePre').textContent = oldVal;
+            }
+
+            try {
+                document.getElementById('newValuePre').textContent = (newVal && newVal !== 'None') ? JSON.stringify(JSON.parse(newVal), null, 2) : 'None';
+            } catch {
+                document.getElementById('newValuePre').textContent = newVal;
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('payloadModal'));
+            modal.show();
+        }
+    </script>
+}

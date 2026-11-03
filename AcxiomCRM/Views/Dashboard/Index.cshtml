@@ -1,0 +1,304 @@
+@model AcxiomCRM.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "CRM Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-speedometer2 text-primary me-2"></i>Sales & CRM Dashboard</h2>
+        <p class="text-muted small mb-0">Overview of pipeline metrics, active leads, and team execution</p>
+    </div>
+    <div class="btn-group" role="group">
+        <a asp-action="Index" asp-route-dateFilter="All" class="btn btn-sm @(Model.DateFilter == "All" ? "btn-primary" : "btn-outline-secondary")">All Time</a>
+        <a asp-action="Index" asp-route-dateFilter="Month" class="btn btn-sm @(Model.DateFilter == "Month" ? "btn-primary" : "btn-outline-secondary")">This Month</a>
+        <a asp-action="Index" asp-route-dateFilter="Week" class="btn btn-sm @(Model.DateFilter == "Week" ? "btn-primary" : "btn-outline-secondary")">This Week</a>
+        <a asp-action="Index" asp-route-dateFilter="Today" class="btn btn-sm @(Model.DateFilter == "Today" ? "btn-primary" : "btn-outline-secondary")">Today</a>
+    </div>
+</div>
+
+<!-- KPI Cards Row 1 -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-custom p-3 border-start border-4 border-primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">Total Customers</span>
+                    <h3 class="fw-bold mt-1 mb-0">@Model.TotalCustomers</h3>
+                </div>
+                <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle">
+                    <i class="bi bi-people-fill fs-4"></i>
+                </div>
+            </div>
+            <div class="mt-2 text-muted small">
+                <a asp-controller="Customers" asp-action="Index" class="text-decoration-none">View directory &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-custom p-3 border-start border-4 border-info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">Leads (Total / Open)</span>
+                    <h3 class="fw-bold mt-1 mb-0">@Model.TotalLeads <span class="fs-5 text-muted fw-normal">/ @Model.OpenLeads open</span></h3>
+                </div>
+                <div class="bg-info bg-opacity-10 text-info p-3 rounded-circle">
+                    <i class="bi bi-funnel-fill fs-4"></i>
+                </div>
+            </div>
+            <div class="mt-2 text-muted small">
+                <a asp-controller="Leads" asp-action="Index" class="text-decoration-none">Manage leads &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-custom p-3 border-start border-4 border-warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">Opportunities (Open)</span>
+                    <h3 class="fw-bold mt-1 mb-0">@Model.OpenOpportunities <span class="fs-6 text-muted fw-normal">of @Model.TotalOpportunities</span></h3>
+                </div>
+                <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-circle">
+                    <i class="bi bi-briefcase-fill fs-4"></i>
+                </div>
+            </div>
+            <div class="mt-2 text-muted small">
+                <span class="text-success fw-semibold">@Model.WonOpportunities Won</span> &bull; <span class="text-danger fw-semibold">@Model.LostOpportunities Lost</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-custom p-3 border-start border-4 border-success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">Pipeline Value</span>
+                    <h3 class="fw-bold mt-1 mb-0 text-success">&#8377;@Model.TotalPipelineValue.ToString("N0")</h3>
+                </div>
+                <div class="bg-success bg-opacity-10 text-success p-3 rounded-circle">
+                    <i class="bi bi-currency-rupee fs-4"></i>
+                </div>
+            </div>
+            <div class="mt-2 text-muted small">
+                Weighted: <strong>&#8377;@Model.WeightedPipelineValue.ToString("N0")</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-4 mb-4">
+    <!-- Chart 1: Opportunity Pipeline by Stage -->
+    <div class="col-lg-7">
+        <div class="card card-custom h-100">
+            <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="bi bi-bar-chart-line text-primary me-2"></i>Opportunity Pipeline by Stage</h5>
+                <span class="badge bg-light text-dark border">Stage Value (INR)</span>
+            </div>
+            <div class="card-body">
+                <div style="height: 280px; position: relative;">
+                    <canvas id="pipelineStageChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 2: Lead Status Breakdown -->
+    <div class="col-lg-5">
+        <div class="card card-custom h-100">
+            <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="bi bi-pie-chart text-primary me-2"></i>Lead Status Breakdown</h5>
+                <span class="badge bg-light text-dark border">Status Mix</span>
+            </div>
+            <div class="card-body">
+                <div style="height: 280px; position: relative;">
+                    <canvas id="leadStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart 3 & Follow-ups Row -->
+<div class="row g-4 mb-4">
+    <!-- Chart 3: Monthly Sales Trends -->
+    <div class="col-lg-6">
+        <div class="card card-custom h-100">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+                <h5 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow text-success me-2"></i>Monthly Closed Won Trend</h5>
+                <p class="text-muted small mb-0">Closed deal revenue over the past 6 months</p>
+            </div>
+            <div class="card-body">
+                <div style="height: 250px; position: relative;">
+                    <canvas id="monthlySalesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Follow-Ups Table -->
+    <div class="col-lg-6">
+        <div class="card card-custom h-100">
+            <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold mb-0"><i class="bi bi-alarm text-warning me-2"></i>Upcoming & Pending Follow-Ups</h5>
+                    <p class="text-muted small mb-0">Planned engagements requiring action</p>
+                </div>
+                <a asp-controller="FollowUps" asp-action="Create" class="btn btn-sm btn-outline-primary">+ New Follow-Up</a>
+            </div>
+            <div class="card-body p-0 pt-2">
+                @if (Model.UpcomingFollowUps.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light small text-uppercase">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Target</th>
+                                    <th>Remarks</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var f in Model.UpcomingFollowUps)
+                                {
+                                    <tr>
+                                        <td class="small fw-semibold text-nowrap">@f.FollowUpDate.ToString("dd MMM yyyy HH:mm")</td>
+                                        <td><span class="badge bg-secondary">@f.FollowUpType</span></td>
+                                        <td class="small">
+                                            @if (f.Customer != null)
+                                            {
+                                                <i class="bi bi-building text-primary me-1"></i>@f.Customer.CustomerName
+                                            }
+                                            else if (f.Lead != null)
+                                            {
+                                                <i class="bi bi-funnel text-info me-1"></i>@f.Lead.LeadName
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">General</span>
+                                            }
+                                        </td>
+                                        <td class="small text-truncate" style="max-width: 150px;">@f.Remarks</td>
+                                        <td class="text-end">
+                                            <form asp-controller="FollowUps" asp-action="Complete" asp-route-id="@f.FollowUpId" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-success py-0 px-2" title="Mark Done">
+                                                    <i class="bi bi-check2"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="p-4 text-center text-muted small">No upcoming planned follow-ups.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Pipeline Stage Chart
+            const pipelineCtx = document.getElementById('pipelineStageChart').getContext('2d');
+            new Chart(pipelineCtx, {
+                type: 'bar',
+                data: {
+                    labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PipelineStageLabels)),
+                    datasets: [{
+                        label: 'Stage Value (₹)',
+                        data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PipelineStageValues)),
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.75)',
+                            'rgba(14, 165, 233, 0.75)',
+                            'rgba(245, 158, 11, 0.75)',
+                            'rgba(34, 197, 94, 0.75)',
+                            'rgba(239, 68, 68, 0.75)'
+                        ],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) { return '₹' + value.toLocaleString(); }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Lead Status Doughnut Chart
+            const leadCtx = document.getElementById('leadStatusChart').getContext('2d');
+            new Chart(leadCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.LeadStatusLabels)),
+                    datasets: [{
+                        data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.LeadStatusCounts)),
+                        backgroundColor: [
+                            '#3b82f6',
+                            '#0ea5e9',
+                            '#f59e0b',
+                            '#10b981',
+                            '#ef4444'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Monthly Sales Line Chart
+            const monthlyCtx = document.getElementById('monthlySalesChart').getContext('2d');
+            new Chart(monthlyCtx, {
+                type: 'line',
+                data: {
+                    labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthlySalesLabels)),
+                    datasets: [{
+                        label: 'Closed Won (₹)',
+                        data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthlySalesValues)),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: '#10b981',
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) { return '₹' + value.toLocaleString(); }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,8 @@
+bin/
+obj/
+.dotnet/
+*.db
+*.db-shm
+*.db-wal
+.vs/
+*.user

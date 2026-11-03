@@ -1,0 +1,153 @@
+@model AcxiomCRM.ViewModels.LeadDetailsViewModel
+@{
+    ViewData["Title"] = "Lead: " + Model.Lead.LeadName;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-funnel text-primary me-2"></i>@Model.Lead.LeadName</h3>
+        <span class="badge @(Model.Lead.Status == "Converted" ? "bg-success" : Model.Lead.Status == "Qualified" ? "bg-warning text-dark" : "bg-primary")">@Model.Lead.Status</span>
+        <span class="badge bg-secondary ms-1">Priority: @Model.Lead.Priority</span>
+        <span class="text-muted small ms-2"><code>@Model.Lead.LeadCode</code> &bull; Assigned to: @Model.AssignedToName</span>
+    </div>
+    <div class="d-flex gap-2">
+        @if (Model.Lead.Status == "Qualified")
+        {
+            <a asp-action="Convert" asp-route-id="@Model.Lead.LeadId" class="btn btn-success btn-sm">
+                <i class="bi bi-arrow-repeat me-1"></i> Convert to Customer
+            </a>
+        }
+        @if (Model.Lead.Status != "Converted")
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Lead.LeadId" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil me-1"></i> Edit</a>
+        }
+        <a asp-controller="FollowUps" asp-action="Create" asp-route-leadId="@Model.Lead.LeadId" class="btn btn-sm btn-outline-warning text-dark"><i class="bi bi-calendar-plus me-1"></i> Follow-Up</a>
+        <a asp-controller="Activities" asp-action="Create" asp-route-leadId="@Model.Lead.LeadId" class="btn btn-sm btn-outline-info text-dark"><i class="bi bi-journal-plus me-1"></i> Log Activity</a>
+        <a asp-action="Index" class="btn btn-sm btn-light border">&larr; Back</a>
+    </div>
+</div>
+
+@if (Model.Lead.Status == "Converted" && Model.Lead.ConvertedCustomer != null)
+{
+    <div class="alert alert-success d-flex align-items-center mb-4">
+        <i class="bi bi-check-circle-fill fs-4 me-3"></i>
+        <div>
+            <strong>This lead has been successfully converted into an active customer account.</strong>
+            <div>Customer: <a asp-controller="Customers" asp-action="Details" asp-route-id="@Model.Lead.ConvertedCustomerId" class="fw-bold text-success text-decoration-none">@Model.Lead.ConvertedCustomer.CustomerName (@Model.Lead.ConvertedCustomer.CustomerCode) &rarr;</a></div>
+        </div>
+    </div>
+}
+
+<div class="row g-3 mb-4">
+    <!-- Lead Details Card -->
+    <div class="col-md-5">
+        <div class="card card-custom h-100">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+                <h5 class="fw-bold mb-0">Prospect Profile</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0 small">
+                    <li class="mb-2"><strong class="text-muted d-block">Company:</strong> @(Model.Lead.CompanyName ?? "-")</li>
+                    <li class="mb-2"><strong class="text-muted d-block">Email:</strong> <a href="mailto:@Model.Lead.Email" class="text-decoration-none">@Model.Lead.Email</a></li>
+                    <li class="mb-2"><strong class="text-muted d-block">Phone:</strong> @Model.Lead.Phone</li>
+                    <li class="mb-2"><strong class="text-muted d-block">Source:</strong> @Model.Lead.Source</li>
+                    <li class="mb-2"><strong class="text-muted d-block">Expected Value:</strong> <span class="fs-6 fw-bold text-success">&#8377;@Model.Lead.ExpectedValue.ToString("N0")</span></li>
+                    <li class="mb-2"><strong class="text-muted d-block">Captured Date:</strong> @Model.Lead.CreatedDate.ToString("dd MMM yyyy HH:mm")</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Follow-Ups -->
+    <div class="col-md-7">
+        <div class="card card-custom h-100">
+            <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="bi bi-calendar-check text-primary me-2"></i>Scheduled Follow-Ups</h5>
+                <a asp-controller="FollowUps" asp-action="Create" asp-route-leadId="@Model.Lead.LeadId" class="btn btn-sm btn-link text-decoration-none">+ Schedule</a>
+            </div>
+            <div class="card-body p-0 pt-2">
+                @if (Model.FollowUps.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Remarks</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var f in Model.FollowUps)
+                                {
+                                    <tr>
+                                        <td>@f.FollowUpDate.ToString("dd MMM yyyy HH:mm")</td>
+                                        <td><span class="badge bg-secondary">@f.FollowUpType</span></td>
+                                        <td>@f.Remarks</td>
+                                        <td>
+                                            @if (f.Status == "Completed")
+                                            {
+                                                <span class="badge bg-success">Completed</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark">Planned</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="p-4 text-center text-muted small">No follow-ups recorded for this lead.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Related Activities Card -->
+<div class="card card-custom">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0"><i class="bi bi-clock-history text-primary me-2"></i>Activities & Engagement Log (@Model.Activities.Count)</h5>
+        <a asp-controller="Activities" asp-action="Create" asp-route-leadId="@Model.Lead.LeadId" class="btn btn-sm btn-outline-primary">+ Log Activity</a>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.Activities.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Subject</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var a in Model.Activities)
+                        {
+                            <tr>
+                                <td>@a.ActivityDate.ToString("dd MMM yyyy HH:mm")</td>
+                                <td><span class="badge bg-info text-dark">@a.ActivityType</span></td>
+                                <td class="fw-semibold">@a.Subject</td>
+                                <td>@(a.Description ?? "-")</td>
+                                <td><span class="badge bg-light text-dark border">@a.Status</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-4 text-center text-muted small">No activities logged yet.</div>
+        }
+    </div>
+</div>
